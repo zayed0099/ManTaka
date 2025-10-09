@@ -30,10 +30,12 @@ class UserDB(Base):
 
 	transactions = relationship(
 		"Transactions", 
-		back_populates="user_tr", 
+		back_populates="user_tr",
+		uselist=False,
 		cascade="all, delete-orphan")
 
 	wallets = relationship(
 		"Wallets", 
 		back_populates="user_wallet", 
+		uselist=False,
 		cascade="all, delete-orphan")

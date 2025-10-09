@@ -14,7 +14,3 @@ class TokenResponse(BaseModel):
 class UserCreate(UserLogin):
 	email : str
 
-class APIResponse(BaseModel):
-    status: str
-    message: str
-    data: Optional[Any] = None

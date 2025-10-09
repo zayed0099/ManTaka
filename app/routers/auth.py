@@ -5,17 +5,20 @@ from sqlalchemy.exc import SQLAlchemyError
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
 from datetime import datetime, timedelta
-
+	
 # Local Import
 from app.database.db import get_db
 from app.schemas.auth_schemas import TokenResponse, UserCreate, UserLogin
 from app.core.jwt_config import get_current_user
-from app.core.config import JWT_SECRET, JWT_ALGORITHM
-from models import UserDB
+from app.core.config import (
+	JWT_SECRET, 
+	JWT_ALGORITHM, 
+	API_VERSION)
+from app.database import UserDB
 
 # Router Setup
 auth_router = APIRouter(
-	prefix="/auth", 
+	prefix=f"{API_VERSION}/auth", 
 	tags=["auth"])
 
 # Argon2 Password Hasher
