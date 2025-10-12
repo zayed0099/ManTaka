@@ -17,7 +17,11 @@ SessionLocal = async_sessionmaker(
 Base = declarative_base()
 
 async def init_db():
-	import models
+	from database import (
+		Transactions, 
+		Wallets, 
+		UserDB)
+	
 	async with engine.begin() as conn:
 		await conn.run_sync(Base.metadata.create_all)
 

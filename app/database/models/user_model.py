@@ -8,6 +8,7 @@ from app.database.db import Base
 class UserDB(Base):
 	__tablename__ = "users"
 	id = Column(Integer, primary_key=True, index=True)
+	
 	username = Column(String, unique=True, nullable=False)
 	email = Column(String, unique=True, nullable=False)
 	password = Column(String, nullable=False)
@@ -20,22 +21,26 @@ class UserDB(Base):
 	created_at = Column(
 		DateTime, 
 		default=datetime.utcnow, 
-		nullable=False)
+		nullable=False
+	)
 	
 	updated_at = Column(
 		DateTime, 
 		default=datetime.utcnow, 
 		onupdate=datetime.utcnow,
-		nullable=False)
-
+		nullable=False
+	)
+	
+	# Relationships
 	transactions = relationship(
 		"Transactions", 
 		back_populates="user_tr",
-		uselist=False,
-		cascade="all, delete-orphan")
+		cascade="all, delete-orphan"
+	)
 
 	wallets = relationship(
 		"Wallets", 
-		back_populates="user_wallet", 
-		uselist=False,
-		cascade="all, delete-orphan")
+		back_populates="user_wa", 
+		cascade="all, delete-orphan"
+	)
+

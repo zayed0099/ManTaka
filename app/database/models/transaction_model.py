@@ -2,8 +2,7 @@ from datetime import datetime
 from sqlalchemy import (
 	Column, Integer, String, ForeignKey, 
 	Boolean, DateTime, CheckConstraint)
-from sqlalchemy.orm import relationship
-
+from sqlalchemy.orm import relationship, backref
 from app.database.db import Base
 
 class Wallets(Base):
@@ -21,10 +20,18 @@ class Wallets(Base):
 	current_amount = Column(Integer, nullable=False)
 	wallet_type = Column(String, nullable=False)
 
-	user_id = Column(Integer, ForeignKey('users.id'))
-	user = relationship(
+	user_id = Column(Integer,
+		ForeignKey('users.id'), index=True)
+	
+	# Relationships
+	user_wa = relationship(
 		"UserDB",
-		uselist=False,
+		back_populates="wallets",
+		cascade="all, delete-orphan")
+
+	tr_wallet = relationship(
+		"Transactions",
+		back_populates="wallet_tr",
 		cascade="all, delete-orphan")
 
 	created_at = Column(
@@ -37,6 +44,7 @@ class Wallets(Base):
 		default=datetime.utcnow, 
 		onupdate=datetime.utcnow,
 		nullable=False)
+
 
 class Transactions(Base):
 	__tablename__ = "transactions"
@@ -51,17 +59,30 @@ class Transactions(Base):
 	amount = Column(Integer, nullable=False)
 	trans_type = Column(String, nullable=False) 
 
-	user_id = Column(Integer, ForeignKey('users.id'))
-	catg_id = Column(Integer, ForeignKey('categories.id'))
+	# Foreign Keys
+	user_id = Column(Integer, 
+		ForeignKey('users.id'), index=True)
 	
-	user = relationship(
+	catg_id = Column(Integer, 
+		ForeignKey('categories.id'), index=True)
+
+	wallet_id = Column(Integer, 
+		ForeignKey('wallets.id'), index=True)
+
+	# Relationships
+	user_tr = relationship(
 		"UserDB",
-		uselist=False,
+		back_populates="transactions",
 		cascade="all, delete-orphan")
 
-	categories = relationship(
+	categories_tr = relationship(
 		"Categories",
-		uselist=False,
+		back_populates="transaction",
+		cascade="all, delete-orphan")
+
+	wallet_tr = relationship(
+		"Wallets",
+		back_populates="tr_wallet",
 		cascade="all, delete-orphan")
 
 	# The User side of datetime, When the transaction happened
@@ -87,15 +108,20 @@ class Categories(Base):
 
 	id = Column(Integer, primary_key=True, index=True)
 	
-	category = Column(Integer, nullable=False)
+	category = Column(String, nullable=False)
 	category_normal = Column(
-		Integer, 
+		String,
 		nullable=False,
+		index=True,
 		unique=True)
 
+	# For future use. To add categories by user in future
+	user_id = Column(Integer, 
+		ForeignKey('users.id'), nullable=True)
+	
 	transaction = relationship(
 		"Transactions",
-		uselist=False,
+		back_populates="categories_tr",
 		cascade="all, delete-orphan")
 
 	created_at = Column(
