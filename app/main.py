@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from routers import auth, habits
+from routers import auth, transactions
 from db import init_db
 
 app = FastAPI()
@@ -11,3 +11,4 @@ async def on_startup():
 
 # Register routers
 app.include_router(auth.auth_router)
+app.include_router(transactions.trx_router)

@@ -51,13 +51,13 @@ class Transactions(Base):
 
 	__table_args__ = (
 		CheckConstraint(
-			"trans_type IN ('income', 'expense', 'transfer')", 
+			"trx_type IN ('income', 'expense', 'transfer')", 
 			name='ck_trans_type'),
 	)
 
 	id = Column(Integer, primary_key=True, index=True)
 	amount = Column(Integer, nullable=False)
-	trans_type = Column(String, nullable=False) 
+	trx_type = Column(String, nullable=False) 
 
 	# Foreign Keys
 	user_id = Column(Integer, 
@@ -68,6 +68,11 @@ class Transactions(Base):
 
 	wallet_id = Column(Integer, 
 		ForeignKey('wallets.id'), index=True)
+
+	# The User side of datetime, When the transaction happened
+	trx_at = Column(
+		DateTime, 
+		nullable=False)
 
 	# Relationships
 	user_tr = relationship(
@@ -85,18 +90,13 @@ class Transactions(Base):
 		back_populates="tr_wallet",
 		cascade="all, delete-orphan")
 
-	# The User side of datetime, When the transaction happened
-	transaction_at = Column(
-		DateTime, 
-		nullable=False)
-
-	# For the main system datetime, When the transaction was added to db
-	created_at = Column(
+	# datetime to track when data was added to/updated at db
+	created_at_db = Column(
 		DateTime, 
 		default=datetime.utcnow, 
 		nullable=False)
 	
-	updated_at = Column(
+	updated_at_db = Column(
 		DateTime, 
 		default=datetime.utcnow, 
 		onupdate=datetime.utcnow,

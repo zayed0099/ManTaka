@@ -45,7 +45,7 @@ async def new_user(data: UserCreate, db: AsyncSession = Depends(get_db)):
 		await db.refresh(db_item)
 		return {"message" : "Account Creation Successful. Head to /login to use account."}, 201
 	except SQLAlchemyError as e:
-		db.rollback()
+		await db.rollback()
 		raise HTTPException(status_code=500, detail="Database error")
 
 @auth_router.post("/login", response_model=TokenResponse)
