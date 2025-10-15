@@ -1,8 +1,10 @@
+# transactions.py
 from fastapi import APIRouter, HTTPException, status, Depends
 from sqlalchemy.future import select, exists
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime, timedelta
+from typing import List
 # Local Import
 from app.database.db import get_db
 from app.schemas import (
@@ -54,12 +56,13 @@ async def new_transactions(
 			detail="An Database error occured.")
 
 @trx_router.patch("/update/{id}")
-async def new_transactions(
+async def update_transaction(
 	id: int,
 	data: UpdateTrx, current_user: dict = Depends(get_current_user),
 	db: AsyncSession = Depends(get_db)):
 	
 	result = await db.execute(select(Transactions).where(
+		Transactions.user_id == current_user["user_id"],
 		Transactions.id == id))
 	existing = result.scalars().first()
 
@@ -95,13 +98,14 @@ async def new_transactions(
 			status_code=500, 
 			detail="An Database error occured.")
 
-@trx_router.patch("/update/{id}")
-async def new_transactions(
+@trx_router.delete("/update/{id}")
+async def delete_transaction(
 	id: int,
 	data: UpdateTrx, current_user: dict = Depends(get_current_user),
 	db: AsyncSession = Depends(get_db)):
 	
 	result = await db.execute(select(Transactions).where(
+		Transactions.user_id == current_user["user_id"],
 		Transactions.id == id))
 	existing = result.scalars().first()
 
@@ -121,5 +125,18 @@ async def new_transactions(
 			status_code=500, 
 			detail="An Database error occured.")
 
+@trx_router.get("/all")
+async def all_transactions(
+	current_user: dict = Depends(get_current_user),
+	db: AsyncSession = Depends(get_db)):
 	
+	result = await db.execute(select(Transactions).where(
+		Transactions.user_id == current_user["user_id"],
+		Transactions.id == id))
+	all_trx = result.scalars().all()
 
+	return APIResponse(
+		status="success",
+		data=all_trx)
+
+@trx_router.

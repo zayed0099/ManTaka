@@ -18,6 +18,8 @@ class UserDB(Base):
 
 	currency = Column(String, default="bdt", nullable=False)
 
+	is_pro_user = Column(Boolean, default=False, nullable=False)
+
 	created_at = Column(
 		DateTime, 
 		default=datetime.utcnow, 
