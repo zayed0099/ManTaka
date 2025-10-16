@@ -6,3 +6,6 @@ class APIResponse(BaseModel):
     status: str
     message: Optional[str] = None
     data: Optional[Any] = None
+
+class AddCatg(BaseModel):
+	category : str

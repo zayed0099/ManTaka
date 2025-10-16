@@ -115,6 +115,7 @@ class Categories(Base):
 		index=True,
 		unique=True)
 
+	is_archieved = Column(Boolean, default=False, nullable=False)
 	# For future use. To add categories by user in future
 	user_id = Column(Integer, 
 		ForeignKey('users.id'), nullable=True)

@@ -1,6 +1,6 @@
 # transactions.py
 from fastapi import APIRouter, HTTPException, status, Depends
-from sqlalchemy.future import select, exists
+from sqlalchemy import select, exists, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime, timedelta
@@ -25,13 +25,18 @@ async def new_transactions(
 	db: AsyncSession = Depends(get_db)):
 	
 	result = await db.execute(
-		select(exists().where(Wallets.id == NewTrx.wallet_id))
+		select(exists().where(
+			and_(
+				Wallets.id == data.wallet_id,
+				Wallets.user_id == current_user["user_id"]
+			)
+		))
 	)
 	existing = result.scalar()
 
 	if not existing:
 		raise HTTPException(status_code=404, 
-			detail="No wallet found for the wallet id.")
+			detail="Wallet not found or access denied.")
 
 	new_record = Transactions(
 		amount = data.amount,
@@ -131,12 +136,9 @@ async def all_transactions(
 	db: AsyncSession = Depends(get_db)):
 	
 	result = await db.execute(select(Transactions).where(
-		Transactions.user_id == current_user["user_id"],
-		Transactions.id == id))
+		Transactions.user_id == current_user["user_id"]))
 	all_trx = result.scalars().all()
 
 	return APIResponse(
 		status="success",
 		data=all_trx)
-
-@trx_router.

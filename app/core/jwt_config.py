@@ -38,12 +38,12 @@ async def get_current_user(cred: HTTPAuthorizationCredentials = Depends(security
         )
     return payload
 
-    """
+"""
     this decorator is same as get_current_user 
     but it just checks user role, mainly for admin authentication.
     admin_required will be used instead of get_current_user
     in admin panel code 
-    """
+"""
 async def admin_required(cred: HTTPAuthorizationCredentials = Depends(security)):
     token = cred.credentials
     payload = decode_jwt(token)
@@ -70,7 +70,7 @@ async def admin_required(cred: HTTPAuthorizationCredentials = Depends(security))
     else:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Admin only route. Only admins can access.",
+            detail="Only admins can access this route.",
             headers={"WWW-Authenticate": "Bearer"},
         )
 

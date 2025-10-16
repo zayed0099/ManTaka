@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, status, Depends
-from sqlalchemy.future import select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import SQLAlchemyError
 from argon2 import PasswordHasher
