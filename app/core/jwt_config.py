@@ -6,6 +6,7 @@ from typing import Optional
 from sqlalchemy import select, exists, and_
 from app.core.config import JWT_ALGORITHM, JWT_SECRET
 from app.database.models import UserDB
+from .api_key_and_rate_limiting import api_limit_manage
 
 security = HTTPBearer()
 
@@ -30,6 +31,10 @@ def decode_jwt(token: str) -> Optional[dict]:
 async def get_current_user(cred: HTTPAuthorizationCredentials = Depends(security)):
     token = cred.credentials
     payload = decode_jwt(token)
+    
+    user_id = payload["user_id"]
+    api_limit_manage(user_id)
+
     if not payload:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

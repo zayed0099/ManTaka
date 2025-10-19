@@ -5,7 +5,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
 from datetime import datetime, timedelta
-	
+import secrets, string
+
 # Local Import
 from app.database.db import get_db
 from app.schemas.auth_schemas import TokenResponse, UserCreate, UserLogin
@@ -15,6 +16,7 @@ from app.core.config import (
 	JWT_ALGORITHM, 
 	API_VERSION)
 from app.database import UserDB
+from app.core.api_key_and_rate_limiting import api_key_set
 
 # Router Setup
 auth_router = APIRouter(
@@ -84,6 +86,13 @@ async def User_Login(data: UserLogin, db: AsyncSession = Depends(get_db)):
 			payload=refresh_payload, 
 			key=JWT_SECRET, 
 			algorithm=JWT_ALGORITHM)
+
+		# Generating API key
+		characters = string.ascii_letters + string.digits  # a-z + A-Z + 0-9
+		api_key = ''.join(secrets.choice(characters) for _ in range(8))
+		
+		# Setting Api key for limit
+		api_key_set(api_key, existing.id, 200, 86400)
 
 		return TokenResponse(
 			access_token=access_token,
