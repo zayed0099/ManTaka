@@ -7,6 +7,7 @@ from sqlalchemy import select, exists, and_
 from app.core.config import JWT_ALGORITHM, JWT_SECRET
 from app.database.models import UserDB
 from .api_key_and_rate_limiting import api_limit_manage
+from app.core.config import JWT_SECRET, JWT_ALGORITHM
 
 security = HTTPBearer()
 
@@ -79,3 +80,33 @@ async def admin_required(cred: HTTPAuthorizationCredentials = Depends(security))
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+async def create_jwt(user_id, role): 
+    access_payload = {
+        "role": role, 
+        "user_id" : user_id,
+        "type" : "access",
+        "iat": int(datetime.utcnow().timestamp()),
+        "exp": int((datetime.utcnow() + timedelta(minutes=30)).timestamp())
+    }
+
+    refresh_payload = {
+        "role": role, 
+        "user_id" : user_id,
+        "type" : "refresh",
+        "iat": int(datetime.utcnow().timestamp()),
+        "exp": int((datetime.utcnow() + timedelta(minutes=120)).timestamp())
+    }
+
+    access_token = jwt.encode(
+        payload=access_payload, 
+        key=JWT_SECRET, 
+        algorithm=JWT_ALGORITHM
+    )
+        
+    refresh_token = jwt.encode(
+        payload=refresh_payload, 
+        key=JWT_SECRET, 
+        algorithm=JWT_ALGORITHM
+    )
+
+    return access_token, refresh_token

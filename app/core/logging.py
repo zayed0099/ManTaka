@@ -1,4 +1,7 @@
 import logging
+import os
+# making sure the logs folder exists
+os.makedirs("logs", exist_ok=True)
 
 # --- Admin logger 
 admin_logger = logging.getLogger("myapp.admin")
@@ -8,9 +11,9 @@ admin_formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
 admin_handler.setFormatter(admin_formatter)
 admin_logger.addHandler(admin_handler)
 admin_logger.setLevel(logging.INFO)
-admin_logger.propagate = False   # don't send messages up to root
+admin_logger.propagate = False   # to not send messages up to root
 
-# --- SQLAlchemy logger ---
+# --- sqlalchemy logger
 sqlalchemy_logger = logging.getLogger("sqlalchemy.orm")
 sqlalchemy_handler = logging.FileHandler("logs/sqlalchemy.log")
 sqlalchemy_formatter = logging.Formatter(

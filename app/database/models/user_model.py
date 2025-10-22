@@ -11,8 +11,10 @@ class UserDB(Base):
 	
 	username = Column(String, unique=True, nullable=False)
 	email = Column(String, unique=True, nullable=False)
-	password = Column(String, nullable=False)
+	password = Column(String, nullable=True)
 	
+	is_oauth_login = Column(Boolean, default=False, nullable=False)
+
 	role = Column(String, default="user", nullable=False)
 	is_banned = Column(Boolean, default=False, nullable=False)
 

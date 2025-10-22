@@ -7,10 +7,11 @@ from typing import List
 from datetime import datetime, timedelta
 # Local Import
 from app.database.db import get_db
+from app.database import Transactions, Categories
 from app.schemas import AddCatg
 from app.core.jwt_config import admin_required
 from app.core.config import API_VERSION
-from app.database import Transactions, Categories
+from app.core.logging import admin_logger
 
 admin_router = APIRouter(
 	prefix=f"{API_VERSION}/admin",
@@ -44,9 +45,12 @@ async def add_category(
 		db.add(new_catg)
 		await db.commit()
 		await db.refresh(new_catg)
+		
+		admin_logger.info(f"{data.category} has been added to the category db.")
 		return APIResponse(
 			status="success",
 			message="Category successfully added.")
+	
 	except SQLAlchemyError as e:
 		await db.rollback()
 		raise HTTPException(
@@ -78,9 +82,12 @@ async def update_category(
 		existing.category = data.category
 		existing.category_normal = data.category.strip().lower()
 		await db.commit()
+		
+		admin_logger.info(f"{data.category} has been changed to {existing.category}.")
 		return APIResponse(
 			status="success",
 			message="Category successfully updated.")
+	
 	except SQLAlchemyError as e:
 		await db.rollback()
 		raise HTTPException(
@@ -110,9 +117,12 @@ async def archieve_category(
 	try:
 		existing.is_active = False
 		await db.commit()
+		
+		admin_logger.info(f"{existing.category} has been archieved.")
 		return APIResponse(
 			status="success",
 			message="Category successfully archieved.")
+	
 	except SQLAlchemyError as e:
 		await db.rollback()
 		raise HTTPException(
@@ -149,9 +159,13 @@ async def archieve_category(
 	try:
 		await db.delete(existing)
 		await db.commit()
+		
+		admin_logger.info(
+			f"{existing.category} has been permanently deleted from the category db.")
 		return APIResponse(
 			status="success",
 			message="Category permanently deleted.")
+	
 	except SQLAlchemyError as e:
 		await db.rollback()
 		raise HTTPException(

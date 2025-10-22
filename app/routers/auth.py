@@ -10,11 +10,8 @@ import secrets, string
 # Local Import
 from app.database.db import get_db
 from app.schemas.auth_schemas import TokenResponse, UserCreate, UserLogin
-from app.core.jwt_config import get_current_user
-from app.core.config import (
-	JWT_SECRET, 
-	JWT_ALGORITHM, 
-	API_VERSION)
+from app.core.jwt_config import get_current_user, create_jwt
+from app.core.config import API_VERSION
 from app.database import UserDB
 from app.core.api_key_and_rate_limiting import api_key_set
 
@@ -50,7 +47,7 @@ async def new_user(data: UserCreate, db: AsyncSession = Depends(get_db)):
 		await db.rollback()
 		raise HTTPException(status_code=500, detail="Database error")
 
-@auth_router.post("/login", response_model=TokenResponse)
+@auth_router.post("/login/cred", response_model=TokenResponse)
 async def User_Login(data: UserLogin, db: AsyncSession = Depends(get_db)):
 	result = await db.execute(select(UserDB).where(UserDB.username == data.username))
 	existing = result.scalars().first()
@@ -61,31 +58,7 @@ async def User_Login(data: UserLogin, db: AsyncSession = Depends(get_db)):
 	try:
 		ph.verify(existing.password, data.password)
 
-		access_payload = {
-			"role": existing.role, 
-			"user_id" : existing.id,
-			"type" : "access",
-			"iat": int(datetime.utcnow().timestamp()),
-			"exp": int((datetime.utcnow() + timedelta(minutes=30)).timestamp())
-		}
-
-		refresh_payload = {
-			"role": existing.role, 
-			"user_id" : existing.id,
-			"type" : "refresh",
-			"iat": int(datetime.utcnow().timestamp()),
-			"exp": int((datetime.utcnow() + timedelta(days=3)).timestamp())
-		}
-
-		access_token = jwt.encode(
-			payload=access_payload, 
-			key=JWT_SECRET, 
-			algorithm=JWT_ALGORITHM)
-		
-		refresh_token = jwt.encode(
-			payload=refresh_payload, 
-			key=JWT_SECRET, 
-			algorithm=JWT_ALGORITHM)
+		access_token, refresh_token = await create_jwt(existing.id, existing.role)
 
 		# Generating API key
 		characters = string.ascii_letters + string.digits  # a-z + A-Z + 0-9
