@@ -13,6 +13,7 @@ from app.core.config import (
 from app.database import UserDB
 from app.database.db import get_db
 from app.schemas.auth_schemas import TokenResponse
+from app.core.api_key_and_rate_limiting import api_key_set
 
 oauth = OAuth()
 
@@ -50,28 +51,40 @@ async def auth_callback(
 	result = await db.execute(select(UserDB).where(UserDB.email == email))
 	existing = result.scalars().first()
 
-	# Random username generation
+	# Random (username + api_key) generation
 	# User can change the username later from his profile
 	characters = string.ascii_letters + string.digits  # a-z + A-Z + 0-9
 	username = ''.join(secrets.choice(characters) for _ in range(6))
+	api_key = ''.join(secrets.choice(characters) for _ in range(8))
 
 	if existing:
-		raise HTTPException(status_code=400, detail="User already exists.")
+		access_token, refresh_token = await create_jwt(
+			existing.id, existing.role)
+		
+		# adding user to api_key manage db
+		api_key_set(api_key, existing.id, 200, 86400)
 
+		return TokenResponse(
+			access_token=access_token,
+			refresh_token=refresh_token) 
+			
 	new_user_entry = UserDB(
 		username=username,
 		email=email,
 		is_oauth_login=True
-	)
+	)		
 
-	try:
+	try:	
 		db.add(new_user_entry)
 		await db.commit()
 		await db.refresh(new_user_entry)
-		
+			
 		access_token, refresh_token = await create_jwt(
 			new_user_entry.id, new_user_entry.role)
 		
+		# adding user to api_key manage db
+		api_key_set(api_key, new_user_entry.id, 200, 86400)
+
 		return TokenResponse(
 			access_token=access_token,
 			refresh_token=refresh_token) 

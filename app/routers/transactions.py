@@ -1,6 +1,7 @@
 # transactions.py
-from fastapi import APIRouter, HTTPException, status, Depends
-from sqlalchemy import select, exists, and_
+from fastapi import (
+	APIRouter, HTTPException, status, Depends, Query)
+from sqlalchemy import select, exists, and_, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime, timedelta
@@ -8,7 +9,7 @@ from typing import List
 # Local Import
 from app.database.db import get_db
 from app.schemas import (
-	NewTrx, APIResponse, UpdateTrx)
+	NewTrx, APIResponse, UpdateTrx, PaginatedResponse)
 from app.core.jwt_config import get_current_user
 from app.core.config import API_VERSION
 from app.database import Transactions, Wallets
@@ -19,6 +20,9 @@ trx_router = APIRouter(
 	dependencies=[Depends(get_current_user)],
 	tags=["transactions"])
 
+"""
+	Transactions CRUD
+"""
 @trx_router.post("/new")
 async def new_transactions(
 	data: NewTrx, current_user: dict = Depends(get_current_user),
@@ -38,27 +42,34 @@ async def new_transactions(
 		raise HTTPException(status_code=404, 
 			detail="Wallet not found or access denied.")
 
-	new_record = Transactions(
-		amount = data.amount,
-		trx_type = data.trx_type,
-		trx_at = data.trx_at,
-		wallet_id = data.wallet_id,
-		catg_id = data.catg_id,
-		user_id = current_user["user_id"]
-	)
-
 	try:
-		db.add(new_record)
-		await db.commit()
-		await db.refresh(new_record)
+		trx_date = datetime.strptime(data.trx_at, "%d:%m:%Y")
+		
+		new_record = Transactions(
+			amount = data.amount,
+			trx_type = data.trx_type,
+			trx_at = trx_date,
+			wallet_id = data.wallet_id,
+			catg_id = data.catg_id,
+			user_id = current_user["user_id"]
+		)
+
+		try:
+			db.add(new_record)
+			await db.commit()
+			await db.refresh(new_record)
+			return APIResponse(
+				status="success",
+				message="Record successfully added.")
+		except SQLAlchemyError as e:
+			await db.rollback()
+			raise HTTPException(
+				status_code=500, 
+				detail="An Database error occured.")
+
+	except ValueError:
 		return APIResponse(
-			status="success",
-			message="Record successfully added.")
-	except SQLAlchemyError as e:
-		await db.rollback()
-		raise HTTPException(
-			status_code=500, 
-			detail="An Database error occured.")
+			status="fail", message="Invalid DateTime format.")
 
 @trx_router.patch("/update/{id}")
 async def update_transaction(
@@ -130,15 +141,40 @@ async def delete_transaction(
 			status_code=500, 
 			detail="An Database error occured.")
 
-@trx_router.get("/all")
+@trx_router.get("/view", response_model=PaginatedResponse)
 async def all_transactions(
 	current_user: dict = Depends(get_current_user),
-	db: AsyncSession = Depends(get_db)):
+	db: AsyncSession = Depends(get_db),
+	page: int = Query(1, ge=1),
+	page_size: int = Query(10, ge=1, le=100)):
 	
-	result = await db.execute(select(Transactions).where(
-		Transactions.user_id == current_user["user_id"]))
-	all_trx = result.scalars().all()
+	# counting total row for the user
+	total_result = await db.execute(
+		select(func.count())
+		.select_from(Transactions)
+		.where(Transactions.user_id == current_user["user_id"])
+	)
+	total = total_result.scalar_one()
 
-	return APIResponse(
+	offset = (page - 1) * page_size
+	total_pages =  (total + page_size - 1) // page_size
+
+	result = await db.execute(
+		select(Transactions)
+		.where(Transactions.user_id == current_user["user_id"])
+		.order_by(desc(Transactions.amount))
+		.offset(offset)
+		.limit(page_size)
+	)
+	transactions = result.scalars().all()
+
+	return PaginatedResponse(
 		status="success",
-		data=all_trx)
+		data=transactions,
+		total_pages=total_pages, 
+		page=page, page_size=page_size)
+
+""" 
+	Summary of Transactions
+"""
+

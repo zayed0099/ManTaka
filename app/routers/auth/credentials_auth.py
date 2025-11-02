@@ -73,3 +73,4 @@ async def User_Login(data: UserLogin, db: AsyncSession = Depends(get_db)):
 	
 	except VerifyMismatchError:
 		raise HTTPException(status_code=400, detail="Invalid Username or Password")
+

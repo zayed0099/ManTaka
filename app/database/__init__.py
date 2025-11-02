@@ -3,5 +3,5 @@ from app.database.models import Wallets, Transactions, Categories
 
 
 __all__ = [
-	"UserDB" , "Wallets" , "Transactions"
+	"UserDB" , "Wallets" , "Transactions", "Categories"
 ]

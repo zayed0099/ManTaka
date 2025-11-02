@@ -7,7 +7,7 @@ from app.database.db import Base
 
 class Wallets(Base):
 	__tablename__ = "wallets"
-
+	
 	__table_args__ = (
 		CheckConstraint(
 			"wallet_type IN ('cash', 'credit', 'fd', 'bank', 'digital')", 
@@ -74,6 +74,18 @@ class Transactions(Base):
 		DateTime, 
 		nullable=False)
 
+	# datetime to track when data was added to/updated at db
+	created_at_db = Column(
+		DateTime, 
+		default=datetime.utcnow, 
+		nullable=False)
+	
+	updated_at_db = Column(
+		DateTime, 
+		default=datetime.utcnow, 
+		onupdate=datetime.utcnow,
+		nullable=False)
+
 	# Relationships
 	user_tr = relationship(
 		"UserDB",
@@ -89,18 +101,6 @@ class Transactions(Base):
 		"Wallets",
 		back_populates="tr_wallet",
 		cascade="all, delete-orphan")
-
-	# datetime to track when data was added to/updated at db
-	created_at_db = Column(
-		DateTime, 
-		default=datetime.utcnow, 
-		nullable=False)
-	
-	updated_at_db = Column(
-		DateTime, 
-		default=datetime.utcnow, 
-		onupdate=datetime.utcnow,
-		nullable=False)
 
 
 class Categories(Base):

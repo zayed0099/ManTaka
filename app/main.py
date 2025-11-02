@@ -1,8 +1,8 @@
 import uvicorn
 from fastapi import FastAPI
 from starlette.middleware.sessions import SessionMiddleware
-from routers import (
-	auth, transactions, admin, social_auth)
+from routers import transactions, admin
+from routers.auth import credentials_auth, social_auth
 from db import init_db
 from app.core.config import SECRET_KEY
 
@@ -17,10 +17,10 @@ async def on_startup():
 app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
 
 # Register routers
-app.include_router(auth.auth_router)
 app.include_router(transactions.trx_router)
 app.include_router(admin.admin_router)
 app.include_router(social_auth.social_auth_router)
+app.include_router(credentials_auth.auth_router)
 
 if __name__ == "__main__":
 	uvicorn.run(

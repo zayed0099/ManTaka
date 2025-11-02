@@ -25,7 +25,7 @@ sqlalchemy_logger.addHandler(sqlalchemy_handler)
 sqlalchemy_logger.setLevel(logging.INFO)
 sqlalchemy_logger.propagate = False
 							
-# --- FastApi uvicorn logger
+# --- FastApi uvicorn access logger
 uvicorn_logger = logging.getLogger("uvicorn.access")
 uvicorn_handler = logging.FileHandler("logs/access.log")
 uvicorn_handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
@@ -33,7 +33,7 @@ uvicorn_logger.addHandler(uvicorn_handler)
 uvicorn_logger.setLevel(logging.INFO)
 uvicorn_logger.propagate = False
 
-# --- FastApi uvicorn logger
+# --- FastApi uvicorn error logger
 uvicorn_error_logger = logging.getLogger("uvicorn.error")
 uvicorn_error_handler = logging.FileHandler("logs/error.log")
 uvicorn_error_handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
