@@ -1,7 +1,8 @@
 # transactions.py
 from fastapi import (
 	APIRouter, HTTPException, status, Depends, Query)
-from sqlalchemy import select, exists, and_, desc
+from sqlalchemy import select, desc, exists
+from sqlalchemy.sql import and_,
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime, timedelta
@@ -43,12 +44,12 @@ async def new_transactions(
 			detail="Wallet not found or access denied.")
 
 	try:
-		trx_date = datetime.strptime(data.trx_at, "%d:%m:%Y")
+		trx_at_filtered = datetime.strptime(data.trx_at, "%d:%m:%Y")
 		
 		new_record = Transactions(
 			amount = data.amount,
 			trx_type = data.trx_type,
-			trx_at = trx_date,
+			trx_at = trx_at_filtered,
 			wallet_id = data.wallet_id,
 			catg_id = data.catg_id,
 			user_id = current_user["user_id"]

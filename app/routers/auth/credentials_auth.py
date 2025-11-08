@@ -13,7 +13,7 @@ from app.schemas.auth_schemas import TokenResponse, UserCreate, UserLogin
 from app.core.jwt_config import get_current_user, create_jwt
 from app.core.config import API_VERSION
 from app.database import UserDB
-from app.core.api_key_and_rate_limiting import api_key_set
+from app.core.api_key_and_rate_limiting import api_key_set, logout_user
 
 # Router Setup
 auth_router = APIRouter(
@@ -65,7 +65,7 @@ async def User_Login(data: UserLogin, db: AsyncSession = Depends(get_db)):
 		api_key = ''.join(secrets.choice(characters) for _ in range(8))
 		
 		# Setting Api key for limit
-		api_key_set(api_key, existing.id, 200, 86400)
+		await api_key_set(api_key, existing.id, 200, 86400)
 
 		return TokenResponse(
 			access_token=access_token,
@@ -74,3 +74,9 @@ async def User_Login(data: UserLogin, db: AsyncSession = Depends(get_db)):
 	except VerifyMismatchError:
 		raise HTTPException(status_code=400, detail="Invalid Username or Password")
 
+@auth_router.delete("/logout")
+async def logout_user(
+	current_user: dict = Depends(get_current_user),
+	db: AsyncSession = Depends(get_db)):
+	
+	await logout_user(current_user["user_id"])

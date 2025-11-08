@@ -25,7 +25,7 @@ cur.execute(
 
 conn.commit()
 
-def api_limit_manage(user_id):
+async def api_limit_manage(user_id):
 	cur.execute(
 		"""SELECT max_limit, current_limit_count, expires_at 
 		FROM api_key WHERE user_id=?""", (user_id,)
@@ -56,7 +56,7 @@ def api_limit_manage(user_id):
 
 		else:
 			cur.execute(
-				"DELETE FROM api_key WHERE user_id=?", (user_id)
+				"DELETE FROM api_key WHERE user_id=?", (user_id,)
 				)
 			conn.commit()
 			raise HTTPException(
@@ -64,11 +64,15 @@ def api_limit_manage(user_id):
 				detail="Api key expired or limit reached."
 			)
 
-def api_key_set(id_, api_key, user_id, max_limit, ttl):
+async def api_key_set(id_, api_key, user_id, max_limit, ttl):
 	expires_at = time.time() + ttl
 	cur.execute(
 			"""INSERT OR REPLACE INTO api_key (
 			id_, api_key, user_id, expires_at, max_limit) VALUES (?, ?, ?, ?)""",
 			(id_, api_key, user_id, expires_at, max_limit)
 		)
+	conn.commit()
+
+async def logout_user(user_id):
+	cur.execute("DELETE FROM api_key WHERE user_id = ?", (user_id,))
 	conn.commit()

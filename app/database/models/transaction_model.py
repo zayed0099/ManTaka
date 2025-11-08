@@ -74,7 +74,7 @@ class Transactions(Base):
 		DateTime, 
 		nullable=False)
 
-	# datetime to track when data was added to/updated at db
+	# Db side of datetime to track when data was added to/updated at db
 	created_at_db = Column(
 		DateTime, 
 		default=datetime.utcnow, 

@@ -62,7 +62,7 @@ async def auth_callback(
 			existing.id, existing.role)
 		
 		# adding user to api_key manage db
-		api_key_set(api_key, existing.id, 200, 86400)
+		await api_key_set(api_key, existing.id, 200, 86400)
 
 		return TokenResponse(
 			access_token=access_token,
@@ -83,7 +83,7 @@ async def auth_callback(
 			new_user_entry.id, new_user_entry.role)
 		
 		# adding user to api_key manage db
-		api_key_set(api_key, new_user_entry.id, 200, 86400)
+		await api_key_set(api_key, new_user_entry.id, 200, 86400)
 
 		return TokenResponse(
 			access_token=access_token,
