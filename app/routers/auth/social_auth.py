@@ -30,7 +30,7 @@ oauth.register(
 )
 
 social_auth_router = APIRouter(
-	prefix="/auth",
+	prefix="/auth/social",
 	tags=["auth"])
 
 @social_auth_router.get("/login")

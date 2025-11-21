@@ -1,6 +1,6 @@
 from datetime import datetime
 from sqlalchemy import (
-	Column, Integer, String, ForeignKey, 
+	Column, Integer, Text, String, ForeignKey, 
 	Boolean, DateTime, CheckConstraint)
 from sqlalchemy.orm import relationship, backref
 from app.database.db import Base
@@ -19,6 +19,7 @@ class Wallets(Base):
 
 	current_amount = Column(Integer, nullable=False)
 	wallet_type = Column(String, nullable=False)
+	description = Column(Text, nullable=True)
 
 	user_id = Column(Integer,
 		ForeignKey('users.id'), index=True)
@@ -116,6 +117,7 @@ class Categories(Base):
 		unique=True)
 
 	is_archieved = Column(Boolean, default=False, nullable=False)
+	
 	# For future use. To add categories by user in future
 	user_id = Column(Integer, 
 		ForeignKey('users.id'), nullable=True)
@@ -124,7 +126,7 @@ class Categories(Base):
 		"Transactions",
 		back_populates="categories_tr",
 		cascade="all, delete-orphan")
-
+	
 	created_at = Column(
 		DateTime, 
 		default=datetime.utcnow, 

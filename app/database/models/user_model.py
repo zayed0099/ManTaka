@@ -48,3 +48,8 @@ class UserDB(Base):
 		cascade="all, delete-orphan"
 	)
 
+	tasks = relationship(
+		"Tasks",
+		back_populates="task_user",
+		cascade="all, delete-orphan"
+	)

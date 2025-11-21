@@ -6,6 +6,7 @@ class NewTrx(BaseModel):
 	amount : int
 	trx_type : str
 	trx_at : date
+	description : Optional[str] = None 
 
 	# Fk's
 	wallet_id : int
