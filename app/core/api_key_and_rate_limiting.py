@@ -1,6 +1,7 @@
 
 import sqlite3, time
 from fastapi import HTTPException, status
+
 # setup
 conn = sqlite3.connect(":memory:")
 cur = conn.cursor()

@@ -14,6 +14,7 @@ from app.schemas import (
 from app.core.jwt_config import get_current_user
 from app.core.config import API_VERSION
 from app.database import Transactions, Wallets
+from app.utils import add_to_db, update_to_db
 
 # Router Setup
 trx_router = APIRouter(
@@ -60,22 +61,8 @@ async def new_transactions(
 			user_id = current_user["user_id"],
 			description = data.description
 		)
-
-		try:
-			db.add(new_record)
-			await db.commit()
-			await db.refresh(new_record)
-
-			response.status_code = 201
-			return APIResponse(
-				status="success",
-				message="Record successfully added.")
 		
-		except SQLAlchemyError as e:
-			await db.rollback()
-			raise HTTPException(
-				status_code=500, 
-				detail="An Database error occured.")
+		await add_to_db(new_record)
 
 	except ValueError:
 		response.status_code = 400
@@ -112,20 +99,7 @@ async def update_transaction(
 	if data.catg_id is not None:
 		existing.catg_id = data.catg_id
 
-	try:
-		db.add(new_record)
-		await db.commit()
-		await db.refresh(new_record)
-
-		response.status_code = 200
-		return APIResponse(
-			status="success",
-			message="Record successfully updated.")
-	except SQLAlchemyError as e:
-		await db.rollback()
-		raise HTTPException(
-			status_code=500, 
-			detail="An Database error occured.")
+	await update_to_db(existing)
 
 @trx_router.delete("/{id}", response_model=APIResponse)
 async def delete_transaction(
@@ -232,7 +206,7 @@ async def transaction_summary(
 	if not results:
 		raise HTTPException(
 			status_code=404, 
-			detail="The user requested data wasn't found in the database.")
+			detail="The users requested data wasn't found in the database.")
 
 	totals = {row['trx_type']: row['Total_Spent'] for row in results}
 	

@@ -14,7 +14,9 @@ app = FastAPI()
 @app.on_event("startup")
 async def on_startup():
 	await init_db()
+	admin_logger.info("Server started.")
 	start_scheduler(app)
+
 
 # Middleware 
 app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
@@ -26,6 +28,11 @@ app.include_router(social_auth.social_auth_router)
 app.include_router(credentials_auth.auth_router)
 app.include_router(visuals.visual_router)
 app.include_router(tasks.tasks_router)
+
+# App Shutdown settings
+@app.on_event("shutdown")
+def shutdown_event():
+	admin_logger.info("Server being shutdown.")
 
 if __name__ == "__main__":
 	uvicorn.run(
