@@ -13,6 +13,7 @@ from app.schemas import (
 from app.core.jwt_config import get_current_user
 from app.core.config import API_VERSION
 from app.database import Transactions, Wallets, Tasks
+from app.utils import add_to_db
 
 # Router Setup
 tasks_router = APIRouter(
@@ -57,18 +58,4 @@ async def new_scheduled_transaction(
 		description = data.description
 	)
 
-	try:
-		db.add(new_record)
-		await db.commit()
-		await db.refresh(new_record)
-
-		response.status_code = 201
-		return APIResponse(
-			status="success",
-			message="Record successfully added.")
-	
-	except SQLAlchemyError as e:
-		await db.rollback()
-		raise HTTPException(
-			status_code=500, 
-			detail="An Database error occured.")
+	return await add_to_db(new_record, response, db)

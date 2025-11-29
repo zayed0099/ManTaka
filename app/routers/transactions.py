@@ -62,7 +62,7 @@ async def new_transactions(
 			description = data.description
 		)
 		
-		await add_to_db(new_record)
+		return await add_to_db(new_record, response, db)
 
 	except ValueError:
 		response.status_code = 400
@@ -99,7 +99,7 @@ async def update_transaction(
 	if data.catg_id is not None:
 		existing.catg_id = data.catg_id
 
-	await update_to_db(existing)
+	await update_to_db(existing, response, db)
 
 @trx_router.delete("/{id}", response_model=APIResponse)
 async def delete_transaction(

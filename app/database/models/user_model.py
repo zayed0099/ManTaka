@@ -19,7 +19,9 @@ class UserDB(Base):
 	is_banned = Column(Boolean, default=False, nullable=False)
 
 	currency = Column(String, default="bdt", nullable=False)
-
+	
+	
+	# For future use
 	is_pro_user = Column(Boolean, default=False, nullable=False)
 
 	created_at = Column(
@@ -53,3 +55,42 @@ class UserDB(Base):
 		back_populates="task_user",
 		cascade="all, delete-orphan"
 	)
+
+	notifications = relationship(
+		"UserNotifications", 
+		back_populates="user_notif", 
+		cascade="all, delete-orphan"
+	)
+
+
+class UserNotifications(Base):
+	__tablename__ = "user_notifications"
+
+	id = Column(Integer, primary_key=True, index=True)
+
+	notification = Column(Text, nullable=True)
+	is_seen = Column(Boolean, default=False, nullable=False)
+
+	created_at = Column(
+		DateTime, 
+		default=datetime.utcnow, 
+		nullable=False
+	)
+	
+	updated_at = Column(
+		DateTime, 
+		default=datetime.utcnow, 
+		onupdate=datetime.utcnow,
+		nullable=False
+	)
+
+	user_id = Column(Integer,
+		ForeignKey('users.id'), index=True)
+
+	user_notif = relationship(
+		"UserDB",
+		back_populates="notifications",
+		cascade="all, delete-orphan")
+
+
+
