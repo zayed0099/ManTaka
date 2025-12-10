@@ -1,12 +1,13 @@
 # transactions.py
 from fastapi import (
 	APIRouter, HTTPException, status, Depends, Response, Query)
-from sqlalchemy import select, desc, exists
-from sqlalchemy.sql import and_,
+from sqlalchemy import select, desc, exists, func
+from sqlalchemy.sql import and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime, timedelta, date
 from typing import List
+
 # Local Import
 from app.database.db import get_db
 from app.schemas import (
@@ -23,46 +24,98 @@ trx_router = APIRouter(
 	tags=["transactions"])
 
 """
-	Transactions CRUD
+	What this file contains:-
+	[1] Transactions CRUD
+		+ Money transfer from one account to another account
+	[2] Transaction summary route
 """
 @trx_router.post("/new", response_model=APIResponse)
 async def new_transactions(
 	data: NewTrx, current_user: dict = Depends(get_current_user),
 	db: AsyncSession = Depends(get_db), response: Response):
-	
-	result = await db.execute(
-		select(exists().where(
+
+	query_to_validate_sender = await db.execute(
+		select(Wallets)
+		.where(
 			and_(
 				Wallets.id == data.wallet_id,
-				Wallets.user_id == current_user["user_id"]
-			)
+				Wallets.user_id == current_user["user_id"],
+				Wallets.amount >= data.amount
 		))
 	)
-	existing = result.scalar()
+	validate_sender = query_to_validate_sender.scalar_one_or_none()
 
-	if not existing:
+	if not validate_sender:
 		raise HTTPException(status_code=404, 
-			detail="Wallet not found or access denied.")
+			detail="Wallet not found or not enough balance to complete transaction.")
+
+	if data.trx_type == "transfer":
+		query = await db.execute(
+			select(Wallets)
+			.where(
+				and_(
+					Wallets.id == data.recipient_wallet_id,
+					Wallets.user_id == current_user["user_id"]
+				))
+		)
+		recipient_check = query.scalar_one_or_none()
+
+		if not recipient_check:
+			raise HTTPException(status_code=404, 
+				detail="The receiver wallet not found.")
 
 	try:
 		trx_at_filtered = datetime.strptime(data.trx_at, "%d:%m:%Y").date()
-		
-		check_desc = len(data.description)
-		if check_desc > 200:
-			raise HTTPException(status_code=400, 
-				detail="Description not found.")
 
-		new_record = Transactions(
-			amount = data.amount,
-			trx_type = data.trx_type,
-			trx_at = trx_at_filtered,
-			wallet_id = data.wallet_id,
-			catg_id = data.catg_id,
-			user_id = current_user["user_id"],
-			description = data.description
-		)
-		
-		return await add_to_db(new_record, response, db)
+		if data.trx_type == "transfer" and data.recipient_wallet_id is not None:
+			expense_record = Transactions(
+				amount = data.amount,
+				trx_type = "transfer",
+				trx_at = trx_at_filtered,
+				wallet_id = data.wallet_id,
+				catg_id = data.catg_id, # will add a catg for transfer
+				user_id = current_user["user_id"]
+			)
+
+			income_record = Transactions(
+				amount = data.amount,
+				trx_type = "transfer",
+				trx_at = trx_at_filtered,
+				wallet_id = data.recipient_wallet_id,
+				catg_id = data.catg_id,
+				user_id = current_user["user_id"]
+			)
+
+			try:
+			    validate_sender.amount = validate_sender.amount - data.amount
+			    recipient_check.amount = recipient_check.amount + data.amount
+			    db.add(expense_record)
+			    db.add(income_record)
+			    await db.commit()
+			    response.status_code = 201
+				return APIResponse(message="Transfer successfull.")
+			
+			except SQLAlchemyError as e:
+			    await db.rollback()
+			    raise HTTPException(status_code=500, detail="Transfer failed")
+
+		elif data.trx_type in ["expense", "income"]:
+			check_desc = len(data.description)
+			if check_desc > 200:
+				raise HTTPException(status_code=400, 
+					detail="Description too long.")
+
+			new_record = Transactions(
+				amount = data.amount,
+				trx_type = data.trx_type,
+				trx_at = trx_at_filtered,
+				wallet_id = data.wallet_id,
+				catg_id = data.catg_id,
+				user_id = current_user["user_id"],
+				description = data.description
+			)
+			
+			return await add_to_db(new_record, response, db)
 
 	except ValueError:
 		response.status_code = 400
@@ -99,7 +152,7 @@ async def update_transaction(
 	if data.catg_id is not None:
 		existing.catg_id = data.catg_id
 
-	await update_to_db(existing, response, db)
+	return await update_to_db(existing, response, db)
 
 @trx_router.delete("/{id}", response_model=APIResponse)
 async def delete_transaction(
@@ -107,9 +160,11 @@ async def delete_transaction(
 	data: UpdateTrx, current_user: dict = Depends(get_current_user),
 	db: AsyncSession = Depends(get_db)):
 	
-	result = await db.execute(select(Transactions).where(
-		Transactions.user_id == current_user["user_id"],
-		Transactions.id == id))
+	result = await db.execute(
+		select(Transactions).where(
+			Transactions.user_id == current_user["user_id"],
+			Transactions.id == id)
+	)
 	existing = result.scalars().first()
 
 	if not existing:
@@ -168,9 +223,8 @@ async def all_transactions(
 		total_pages=total_pages, 
 		page=page, page_size=page_size)
 
-""" 
-	Summary of Transactions
-"""
+
+# Summary of Transactions
 @trx_router.get("/summary/income", response_model=APIResponse)
 async def transaction_summary(
 	current_user: dict = Depends(get_current_user),
@@ -224,8 +278,3 @@ async def transaction_summary(
 	return APIResponse(
 		status="success",
 		data=summary)
-
-
-
-
-	

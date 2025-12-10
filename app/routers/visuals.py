@@ -1,14 +1,14 @@
 # visuals.py
+import pygal
 import calendar
 from fastapi import APIRouter, HTTPException, status, Depends
 from fastapi.responses import Response
-from sqlalchemy import select, desc, extract
+from sqlalchemy import select, desc, extract, func
 from sqlalchemy.sql import and_, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import SQLAlchemyError
 from typing import List
 from datetime import datetime, date, timedelta
-import pygal
 
 # Local Import
 from app.database.db import get_db
@@ -134,8 +134,8 @@ async def expense_six_months(
 				Transactions.user_id == current_user["user_id"],
 				Transactions.trx_type == "expense",
 				Transactions.trx_at.between(start_date, end_date)
-				)
 			)
+		)
 		.group_by("year", "month")
 		.order_by("year", "month")
 	)
@@ -149,8 +149,7 @@ async def expense_six_months(
 	for row in transactions:
 		month_name = calendar.month_name[int(row['month'])]
 		bar_chart.add(
-			f"{month_name}, {int(row["year"])}", 
-			row["total"]
+			f"{month_name}, {int(row["year"])}", row["total"]
 		)
 
 	expense_six_months_bar = bar_chart.render()
@@ -163,7 +162,7 @@ async def monthly_summary_pie(
 	current_user: dict = Depends(get_current_user),
 	db: AsyncSession = Depends(get_db),
 	):
-
+	
 	start_date = date(year, month, 1)
 	end_date = date(year, month, 28 if month == 2 else 30)
 

@@ -48,7 +48,7 @@ async def auth_callback(
 
 	email = user_info.get("email")
 
-	result = await db.execute(select(UserDB).where(UserDB.email == email))
+	result = await db.execute(select(exists().where(UserDB.email == email)))
 	existing = result.scalars().first()
 
 	# Random (username + api_key) generation
@@ -87,7 +87,8 @@ async def auth_callback(
 
 		return TokenResponse(
 			access_token=access_token,
-			refresh_token=refresh_token) 
+			refresh_token=refresh_token)
+
 	except SQLAlchemyError as e:
 		await db.rollback()
 		raise HTTPException(status_code=500, detail="Database error")

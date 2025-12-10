@@ -21,6 +21,8 @@ class Wallets(Base):
 	wallet_type = Column(String, nullable=False)
 	description = Column(Text, nullable=True)
 
+	is_goal_wallet = Column(Boolean, default=False, nullable=False)
+
 	user_id = Column(Integer,
 		ForeignKey('users.id'), index=True)
 	

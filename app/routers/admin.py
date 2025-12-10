@@ -3,6 +3,7 @@ from fastapi import APIRouter, HTTPException, status, Depends
 from sqlalchemy import select, exists
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.sql import and_
 from typing import List
 from datetime import datetime, timedelta
 # Local Import
@@ -130,7 +131,7 @@ async def archieve_category(
 			detail="An Database error occured.")
 
 @admin_router.delete("/category/{id}")
-async def archieve_category(
+async def delete_category(
 	current_user: dict = Depends(admin_required),
 	db: AsyncSession = Depends(get_db)), id: int:
 

@@ -11,6 +11,7 @@ class NewTrx(BaseModel):
 	# Fk's
 	wallet_id : int
 	catg_id : int
+	recipient_wallet_id : Optional[int] = None
 
 class UpdateTrx(NewTrx):
 	amount : Optional[int] = None

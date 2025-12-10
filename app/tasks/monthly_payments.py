@@ -18,7 +18,7 @@ async def make_monthly_payments():
 
 		for task in tasks:
 			if task.intended_time == now:
-				new_record = Transactions(
+				new_record = Tasks(
 					amount = task.amount,
 					trx_type = task.trx_type,
 					trx_at = task.intended_time,

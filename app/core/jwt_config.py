@@ -82,6 +82,7 @@ async def admin_required(cred: HTTPAuthorizationCredentials = Depends(security))
 			headers={"WWW-Authenticate": "Bearer"},
 		)
 
+
 async def create_jwt(user_id, role):
 	access_token = jwt.encode(
 		payload={

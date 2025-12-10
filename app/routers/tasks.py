@@ -1,7 +1,7 @@
 from fastapi import (
 	APIRouter, HTTPException, status, Depends, Response, Query)
-from sqlalchemy import select, desc, exists
-from sqlalchemy.sql import and_,
+from sqlalchemy import select, desc, exists, func
+from sqlalchemy.sql import and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime, timedelta, date
@@ -48,7 +48,7 @@ async def new_scheduled_transaction(
 		raise HTTPException(status_code=400, 
 			detail="Description not found.")
 
-	new_record = Transactions(
+	new_record = Tasks(
 		amount = data.amount,
 		trx_type = data.trx_type,
 		intended_time = trx_at_filtered,

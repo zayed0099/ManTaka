@@ -50,7 +50,7 @@ async def monthly_summary_notifier():
 			"expense_bigger" : "Ouch! You're in deepe water. You're in debt right now. Please try to redce expense..",
 			"little_difference" : "You're doing well. But you should track your expenses more strictly as your income and expenses are nearly the same. You don't have enough to save and invest." 
 		}
-		
+
 		if results:
 			for r in results:
 				income = r["income"]
