@@ -9,7 +9,7 @@ from datetime import datetime, timedelta, date
 from typing import List
 
 # Local Import
-from app.database.db import get_db
+from app.database.db import get_db, SessionLocal
 from app.schemas import (
 	NewTrx, APIResponse, UpdateTrx, PaginatedResponse)
 from app.core.jwt_config import get_current_user
@@ -87,17 +87,18 @@ async def new_transactions(
 			)
 
 			try:
-			    validate_sender.amount = validate_sender.amount - data.amount
-			    recipient_check.amount = recipient_check.amount + data.amount
-			    db.add(expense_record)
-			    db.add(income_record)
-			    await db.commit()
-			    response.status_code = 201
+				validate_sender.amount = validate_sender.amount - data.amount
+				recipient_check.amount = recipient_check.amount + data.amount
+				db.add(expense_record)
+				db.add(income_record)
+				await db.commit()
+				response.status_code = 201
 				return APIResponse(message="Transfer successfull.")
 			
 			except SQLAlchemyError as e:
-			    await db.rollback()
-			    raise HTTPException(status_code=500, detail="Transfer failed")
+				await db.rollback()
+				admin_logger.error(f"Transfer failed: {str(e)}")
+				raise HTTPException(status_code=500, detail="Transfer failed")
 
 		elif data.trx_type in ["expense", "income"]:
 			check_desc = len(data.description)
@@ -115,7 +116,23 @@ async def new_transactions(
 				description = data.description
 			)
 			
-			return await add_to_db(new_record, response, db)
+			if data.trx_type == "expense":
+				validate_sender.amount = validate_sender.amount - data.amount
+			
+			elif data.trx_type == "income":
+				validate_sender.amount = validate_sender.amount + data.amount
+			
+			# return await add_to_db(new_record, response, db)
+			try:
+				db.add(new_record)
+				await db.commit()
+				response.status_code = 201
+				return APIResponse(message="Transaction successfull.")
+			
+			except SQLAlchemyError as e:
+				admin_logger.error(f"Transfer failed: {str(e)}")
+				await db.rollback()
+				raise HTTPException(status_code=500, detail="Transaction failed")
 
 	except ValueError:
 		response.status_code = 400

@@ -52,7 +52,10 @@ async def get_current_user(cred: HTTPAuthorizationCredentials = Depends(security
 	but it just checks user role, mainly for admin authentication.
 	admin_required will be used instead of get_current_user in admin panel code.
 """
-async def admin_required(cred: HTTPAuthorizationCredentials = Depends(security)):
+async def admin_required(
+	cred: HTTPAuthorizationCredentials = Depends(security),
+	db: AsyncSession = Depends(get_db)
+	):
 	token = cred.credentials
 	payload = decode_jwt(token)
 	if not payload:
